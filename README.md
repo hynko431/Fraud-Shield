@@ -2,6 +2,7 @@
 
 FraudShield is a comprehensive real-time transaction fraud detection system with a modern web interface and robust backend services.
 
+DataSet link :- https://drive.usercontent.google.com/download?id=1VNpyNkGxHdskfdTNRSjjyNa5qC9u0JyV&export=download&authuser=0
 ## 🏗️ Architecture
 
 The system consists of three main components:
