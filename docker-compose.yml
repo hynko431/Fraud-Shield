@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build: .
+    command: python api_gateway.py
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+    depends_on:
+      - model-service
+      - database-service
+    restart: unless-stopped
+
+  # Model Service
+  model-service:
+    build: .
+    command: python model_service.py
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+      - ./fraud_detection_model.pkl:/app/fraud_detection_model.pkl
+    restart: unless-stopped
+
+  # Analytics Service
+  analytics-service:
+    build: .
+    command: python analytics_service.py
+    ports:
+      - "8002:8002"
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_SERVICE_URL=http://database-service:8003
+    volumes:
+      - .:/app
+    depends_on:
+      - database-service
+    restart: unless-stopped
+
+  # Database Service
+  database-service:
+    build: .
+    command: python database_service.py
+    ports:
+      - "8003:8003"
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+      - ./data:/app/data
+    restart: unless-stopped
+
+  # Notification Service
+  notification-service:
+    build: .
+    command: python notification_service.py
+    ports:
+      - "8004:8004"
+    environment:
+      - PYTHONPATH=/app
+      - EMAIL_USERNAME=${EMAIL_USERNAME}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - FROM_EMAIL=${FROM_EMAIL}
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  # Batch Processing Service
+  batch-processing:
+    build: .
+    command: python batch_processing_service.py
+    ports:
+      - "8005:8005"
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+    depends_on:
+      - model-service
+      - database-service
+    restart: unless-stopped
+
+  # Monitoring Service
+  monitoring-service:
+    build: .
+    command: python monitoring_service.py
+    ports:
+      - "8006:8006"
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  # Ingest Service
+  ingest-service:
+    build: .
+    command: python ingest_service.py
+    ports:
+      - "9001:9001"
+    environment:
+      - PYTHONPATH=/app
+      - MODEL_SERVICE_URL=http://model-service:8001
+    volumes:
+      - .:/app
+    depends_on:
+      - model-service
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build: .
+    command: python start_frontend.py
+    ports:
+      - "3000:3000"
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+volumes:
+  data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge

@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FraudShield | Advanced Fraud Detection</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234F46E5'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="config.js"></script>
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .risk-gradient-low {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        }
+        .risk-gradient-medium {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        }
+        .risk-gradient-high {
+            background: linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%);
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .history-item {
+            transition: all 0.2s ease;
+        }
+        .history-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-blue-600 to-indigo-800 text-white rounded-xl p-6 mb-8 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold flex items-center">
+                        <i class="fas fa-shield-alt mr-3"></i>FraudShield
+                    </h1>
+                    <p class="mt-2 opacity-90">Advanced real-time transaction fraud detection system</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span id="currentTime" class="text-sm opacity-80"></span>
+                    <button id="darkModeToggle" class="bg-white bg-opacity-10 hover:bg-opacity-20 p-2 rounded-full transition">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Service Status -->
+        <div class="bg-white rounded-xl p-6 mb-8 shadow-md">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-server mr-2 text-blue-600"></i> Service Status
+                <button id="refreshStatus" class="ml-auto text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-md">
+                    <i class="fas fa-sync-alt mr-1"></i> Refresh
+                </button>
+            </h2>
+            <div id="serviceStatus" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div id="modelStatus" class="px-4 py-3 rounded-lg bg-gray-100 text-gray-800 flex items-center">
+                    <i class="fas fa-circle-notch fa-spin mr-2"></i>
+                    <span>Model Service: Checking...</span>
+                </div>
+                <div id="ingestStatus" class="px-4 py-3 rounded-lg bg-gray-100 text-gray-800 flex items-center">
+                    <i class="fas fa-circle-notch fa-spin mr-2"></i>
+                    <span>Ingest Service: Checking...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction Form -->
+        <div class="bg-white rounded-xl p-6 mb-8 shadow-md">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-credit-card mr-2 text-blue-600"></i> Test Transaction
+            </h2>
+            <form id="transactionForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left Column -->
+                    <div class="space-y-4">
+                        <div class="form-group">
+                            <label for="type" class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                Transaction Type
+                                <div class="tooltip ml-1 relative">
+                                    <i class="fas fa-info-circle text-blue-500 cursor-pointer"></i>
+                                    <div class="tooltip-text absolute z-10 invisible opacity-0 bg-gray-800 text-white text-xs rounded py-1 px-2 -left-20 w-40 mt-2 transition-all">
+                                        Select the type of financial transaction
+                                    </div>
+                                </div>
+                            </label>
+                            <select id="type" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                <option value="PAYMENT">Payment</option>
+                                <option value="TRANSFER">Transfer</option>
+                                <option value="CASH_OUT">Cash Out</option>
+                                <option value="DEBIT">Debit</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500">$</span>
+                                </div>
+                                <input type="number" id="amount" step="0.01" min="0" value="1000" class="pl-7 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nameOrig" class="block text-sm font-medium text-gray-700 mb-1">Origin Account</label>
+                            <input type="text" id="nameOrig" value="C123456789" pattern="^C\d{9}$" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                            <p id="origAccountError" class="text-xs text-red-600 mt-1 hidden">Must start with 'C' followed by 9 digits</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="oldbalanceOrg" class="block text-sm font-medium text-gray-700 mb-1">Old Balance (Origin)</label>
+                            <input type="number" id="oldbalanceOrg" step="0.01" min="0" value="5000" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="space-y-4">
+                        <div class="form-group">
+                            <label for="newbalanceOrig" class="block text-sm font-medium text-gray-700 mb-1">New Balance (Origin)</label>
+                            <input type="number" id="newbalanceOrig" step="0.01" min="0" value="4000" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nameDest" class="block text-sm font-medium text-gray-700 mb-1">Destination Account</label>
+                            <input type="text" id="nameDest" value="M987654321" pattern="^(M|C)\d{9}$" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                            <p id="destAccountError" class="text-xs text-red-600 mt-1 hidden">Must start with 'M' or 'C' followed by 9 digits</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="oldbalanceDest" class="block text-sm font-medium text-gray-700 mb-1">Old Balance (Destination)</label>
+                            <input type="number" id="oldbalanceDest" step="0.01" min="0" value="0" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="newbalanceDest" class="block text-sm font-medium text-gray-700 mb-1">New Balance (Destination)</label>
+                            <input type="number" id="newbalanceDest" step="0.01" min="0" value="1000" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center pt-4">
+                    <button type="button" id="randomBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-dice mr-2"></i> Random Transaction
+                    </button>
+                    <button type="submit" id="submitBtn" class="px-6 py-3 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <span id="btnText"><i class="fas fa-search mr-2"></i> Check for Fraud</span>
+                        <span id="btnSpinner" class="hidden ml-2">
+                            <i class="fas fa-circle-notch fa-spin"></i>
+                        </span>
+                    </button>
+                </div>
+            </form>
+
+            <div id="result" class="mt-6 transition-all duration-300"></div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="bg-white rounded-xl p-6 mb-8 shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-history mr-2 text-blue-600"></i> Test History
+                </h2>
+                <div class="flex space-x-2">
+                    <button id="clearHistoryBtn" class="px-3 py-1 text-sm border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-trash-alt mr-1"></i> Clear
+                    </button>
+                </div>
+            </div>
+            <div id="historyList" class="space-y-2"></div>
+        </div>
+
+        <!-- Risk Explanation -->
+        <div class="bg-white rounded-xl p-6 shadow-md">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-info-circle mr-2 text-blue-600"></i> Risk Score Explanation
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="risk-gradient-low p-4 rounded-lg border border-green-200">
+                    <h3 class="font-medium text-green-800 flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i> Low Risk (0-49%)
+                    </h3>
+                    <p class="text-green-700 text-sm mt-1">Transaction appears legitimate with minimal risk indicators.</p>
+                </div>
+                <div class="risk-gradient-medium p-4 rounded-lg border border-yellow-200">
+                    <h3 class="font-medium text-yellow-800 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i> Medium Risk (50-79%)
+                    </h3>
+                    <p class="text-yellow-700 text-sm mt-1">Transaction shows some suspicious patterns requiring review.</p>
+                </div>
+                <div class="risk-gradient-high p-4 rounded-lg border border-red-200">
+                    <h3 class="font-medium text-red-800 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-2"></i> High Risk (80-100%)
+                    </h3>
+                    <p class="text-red-700 text-sm mt-1">Highly suspicious transaction likely to be fraudulent.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration from external config file
+        const config = window.FraudShieldConfig;
+        const API_GATEWAY_URL = config.api.gatewayUrl;
+        const MODEL_SERVICE_URL = config.api.useGateway ? API_GATEWAY_URL : config.services.modelService;
+        const INGEST_SERVICE_URL = config.api.useGateway ? API_GATEWAY_URL : config.services.ingestService;
+        const HISTORY_KEY = config.storage.history;
+        const API_KEY = config.api.key;
+
+        // DOM Elements
+        const transactionForm = document.getElementById('transactionForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const resultDiv = document.getElementById('result');
+        const historyList = document.getElementById('historyList');
+        const randomBtn = document.getElementById('randomBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const refreshStatus = document.getElementById('refreshStatus');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const currentTime = document.getElementById('currentTime');
+
+        // Initialize dark mode preference
+        let darkMode = localStorage.getItem(config.storage.darkMode) === 'true';
+        updateDarkMode();
+
+        // Utility function for notifications
+        function showNotification(message, type = 'info', duration = 3000) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type} animate-slide-in`;
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, duration);
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            checkServiceStatus();
+            renderHistory();
+            updateClock();
+            setInterval(updateClock, 1000);
+        });
+
+        transactionForm.addEventListener('submit', handleFormSubmit);
+        randomBtn.addEventListener('click', generateRandomTransaction);
+        clearHistoryBtn.addEventListener('click', clearHistory);
+        refreshStatus.addEventListener('click', checkServiceStatus);
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+
+        // Input validation
+        document.getElementById('nameOrig').addEventListener('input', (e) => {
+            const isValid = /^C\d{9}$/.test(e.target.value);
+            e.target.classList.toggle('border-red-500', !isValid);
+            document.getElementById('origAccountError').classList.toggle('hidden', isValid);
+        });
+
+        document.getElementById('nameDest').addEventListener('input', (e) => {
+            const isValid = /^(M|C)\d{9}$/.test(e.target.value);
+            e.target.classList.toggle('border-red-500', !isValid);
+            document.getElementById('destAccountError').classList.toggle('hidden', isValid);
+        });
+
+        // Service status check
+        async function checkServiceStatus() {
+            refreshStatus.disabled = true;
+            refreshStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i> Refreshing';
+
+            if (config.api.useGateway) {
+                // Check all services through API Gateway
+                try {
+                    const response = await fetch(`${API_GATEWAY_URL}/services/status`, {
+                        headers: {
+                            'X-API-Key': API_KEY,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        updateServiceStatusDisplay(data.services);
+                    } else {
+                        throw new Error('Gateway unavailable');
+                    }
+                } catch (error) {
+                    // Fallback to direct service checks
+                    await checkServicesDirectly();
+                }
+            } else {
+                await checkServicesDirectly();
+            }
+
+            refreshStatus.disabled = false;
+            refreshStatus.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Refresh';
+        }
+
+        async function checkServicesDirectly() {
+            // Check Model Service
+            try {
+                const response = await fetch(`${config.services.modelService}/health`);
+                if (response.ok) {
+                    document.getElementById('modelStatus').innerHTML = `
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Model Service: <span class="font-medium">Online</span></span>
+                    `;
+                    document.getElementById('modelStatus').className = 'px-4 py-3 rounded-lg bg-green-50 text-green-800 flex items-center';
+                } else {
+                    throw new Error('Service unavailable');
+                }
+            } catch (error) {
+                document.getElementById('modelStatus').innerHTML = `
+                    <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                    <span>Model Service: <span class="font-medium">Offline</span></span>
+                `;
+                document.getElementById('modelStatus').className = 'px-4 py-3 rounded-lg bg-red-50 text-red-800 flex items-center';
+            }
+
+            // Check Ingest Service
+            try {
+                const response = await fetch(`${config.services.ingestService}/health`);
+                if (response.ok) {
+                    document.getElementById('ingestStatus').innerHTML = `
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Ingest Service: <span class="font-medium">Online</span></span>
+                    `;
+                    document.getElementById('ingestStatus').className = 'px-4 py-3 rounded-lg bg-green-50 text-green-800 flex items-center';
+                } else {
+                    throw new Error('Service unavailable');
+                }
+            } catch (error) {
+                document.getElementById('ingestStatus').innerHTML = `
+                    <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                    <span>Ingest Service: <span class="font-medium">Offline</span> (using Model Service directly)</span>
+                `;
+                document.getElementById('ingestStatus').className = 'px-4 py-3 rounded-lg bg-red-50 text-red-800 flex items-center';
+            }
+        }
+
+        function updateServiceStatusDisplay(services) {
+            // Update Model Service status
+            const modelService = services.model || services.ingest;
+            if (modelService && modelService.status === 'healthy') {
+                document.getElementById('modelStatus').innerHTML = `
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    <span>Model Service: <span class="font-medium">Online</span> (via Gateway)</span>
+                `;
+                document.getElementById('modelStatus').className = 'px-4 py-3 rounded-lg bg-green-50 text-green-800 flex items-center';
+            } else {
+                document.getElementById('modelStatus').innerHTML = `
+                    <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                    <span>Model Service: <span class="font-medium">Offline</span></span>
+                `;
+                document.getElementById('modelStatus').className = 'px-4 py-3 rounded-lg bg-red-50 text-red-800 flex items-center';
+            }
+
+            // Update Ingest Service status
+            const ingestService = services.ingest;
+            if (ingestService && ingestService.status === 'healthy') {
+                document.getElementById('ingestStatus').innerHTML = `
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    <span>Ingest Service: <span class="font-medium">Online</span> (via Gateway)</span>
+                `;
+                document.getElementById('ingestStatus').className = 'px-4 py-3 rounded-lg bg-green-50 text-green-800 flex items-center';
+            } else {
+                document.getElementById('ingestStatus').innerHTML = `
+                    <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                    <span>Ingest Service: <span class="font-medium">Offline</span></span>
+                `;
+                document.getElementById('ingestStatus').className = 'px-4 py-3 rounded-lg bg-red-50 text-red-800 flex items-center';
+            }
+        }
+
+        // Form submission handler
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            // Validate form
+            const nameOrigValid = /^C\d{9}$/.test(document.getElementById('nameOrig').value);
+            const nameDestValid = /^(M|C)\d{9}$/.test(document.getElementById('nameDest').value);
+
+            if (!nameOrigValid || !nameDestValid) {
+                resultDiv.innerHTML = `
+                    <div class="p-4 rounded-lg bg-red-50 border border-red-200 text-red-800">
+                        <h3 class="font-medium flex items-center">
+                            <i class="fas fa-exclamation-triangle mr-2"></i> Validation Error
+                        </h3>
+                        <p class="mt-1">Please correct the highlighted fields before submitting.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Show loading state
+            btnText.innerHTML = '<i class="fas fa-spinner fa-pulse mr-2"></i> Analyzing...';
+            btnSpinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            const transaction = {
+                transaction_id: `test_${Date.now()}`,
+                step: 1,
+                type: document.getElementById('type').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                nameOrig: document.getElementById('nameOrig').value,
+                oldbalanceOrg: parseFloat(document.getElementById('oldbalanceOrg').value),
+                newbalanceOrig: parseFloat(document.getElementById('newbalanceOrig').value),
+                nameDest: document.getElementById('nameDest').value,
+                oldbalanceDest: parseFloat(document.getElementById('oldbalanceDest').value),
+                newbalanceDest: parseFloat(document.getElementById('newbalanceDest').value)
+            };
+
+            try {
+                // Try Ingest Service first, then fallback to Model Service
+                let result = await scoreTransaction(transaction);
+                displayResult(transaction, result.risk, result.service_used);
+                updateHistory(transaction, { risk: result.risk, service: result.service_used });
+            } catch (error) {
+                console.error('Error:', error);
+                displayError(error);
+            } finally {
+                // Reset button state
+                btnText.innerHTML = '<i class="fas fa-search mr-2"></i> Check for Fraud';
+                btnSpinner.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Enhanced scoring function with fallback logic
+        async function scoreTransaction(transaction) {
+            const errors = [];
+
+            if (config.api.useGateway) {
+                // Try API Gateway first
+                try {
+                    const response = await fetch(`${API_GATEWAY_URL}/api/v1/score`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-API-Key': API_KEY
+                        },
+                        body: JSON.stringify({ transactions: [transaction] }),
+                        timeout: config.api.timeout
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        return {
+                            risk: result.results[0].risk,
+                            service_used: 'API Gateway'
+                        };
+                    } else {
+                        throw new Error(`API Gateway HTTP ${response.status}: ${response.statusText}`);
+                    }
+                } catch (error) {
+                    errors.push(`API Gateway: ${error.message}`);
+                    console.warn('API Gateway failed, trying direct services:', error);
+                }
+            }
+
+            // Try Ingest Service directly
+            try {
+                const response = await fetch(`${config.services.ingestService}/score`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ transactions: [transaction] }),
+                    timeout: 10000 // 10 second timeout
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    return {
+                        risk: result.results[0].risk,
+                        service_used: 'Ingest Service (direct)'
+                    };
+                } else {
+                    throw new Error(`Ingest Service HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                errors.push(`Ingest Service: ${error.message}`);
+                console.warn('Ingest Service failed, trying Model Service:', error);
+            }
+
+            // Fallback to Model Service directly
+            try {
+                const response = await fetch(`${config.services.modelService}/score`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ transactions: [transaction] }),
+                    timeout: 10000 // 10 second timeout
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    return {
+                        risk: result.results[0].risk,
+                        service_used: 'Model Service (fallback)'
+                    };
+                } else {
+                    throw new Error(`Model Service HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                errors.push(`Model Service: ${error.message}`);
+                throw new Error(`All services failed:\n${errors.join('\n')}`);
+            }
+        }
+
+        // Enhanced error display
+        function displayError(error) {
+            const isNetworkError = error.message.includes('fetch') || error.message.includes('NetworkError');
+            const isServiceDown = error.message.includes('HTTP 5') || error.message.includes('Service Unavailable');
+
+            let errorType = 'Connection Error';
+            let errorIcon = 'fa-wifi';
+            let suggestions = 'Check your internet connection and try again.';
+
+            if (isServiceDown) {
+                errorType = 'Service Error';
+                errorIcon = 'fa-server';
+                suggestions = 'The fraud detection services are currently unavailable. Please try again later.';
+            } else if (error.message.includes('All services failed')) {
+                errorType = 'System Error';
+                errorIcon = 'fa-exclamation-circle';
+                suggestions = 'All fraud detection services are currently unavailable. Please contact support.';
+            }
+
+            resultDiv.innerHTML = `
+                <div class="p-4 rounded-lg bg-red-50 border border-red-200 text-red-800">
+                    <h3 class="font-medium flex items-center">
+                        <i class="fas ${errorIcon} mr-2"></i> ${errorType}
+                    </h3>
+                    <p class="mt-1">${suggestions}</p>
+                    <details class="mt-3">
+                        <summary class="cursor-pointer text-sm font-medium">Technical Details</summary>
+                        <pre class="mt-2 text-xs bg-red-100 p-2 rounded overflow-auto">${error.message}</pre>
+                    </details>
+                    <div class="mt-3 flex space-x-2">
+                        <button onclick="checkServiceStatus()" class="px-3 py-1 text-xs border border-red-300 rounded-md text-red-700 bg-white hover:bg-red-50">
+                            <i class="fas fa-sync-alt mr-1"></i> Check Services
+                        </button>
+                        <button onclick="handleFormSubmit(event)" class="px-3 py-1 text-xs border border-red-300 rounded-md text-red-700 bg-white hover:bg-red-50">
+                            <i class="fas fa-redo mr-1"></i> Retry
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Display result
+        function displayResult(transaction, riskScore, serviceUsed = 'Model Service') {
+            const percentage = (riskScore * 100).toFixed(1);
+            let riskClass, riskIcon, riskText, riskColor;
+
+            if (riskScore >= 0.8) {
+                riskClass = 'risk-gradient-high';
+                riskIcon = 'fa-exclamation-circle';
+                riskText = 'HIGH RISK';
+                riskColor = 'red';
+            } else if (riskScore >= 0.5) {
+                riskClass = 'risk-gradient-medium';
+                riskIcon = 'fa-exclamation-triangle';
+                riskText = 'MEDIUM RISK';
+                riskColor = 'yellow';
+            } else {
+                riskClass = 'risk-gradient-low';
+                riskIcon = 'fa-check-circle';
+                riskText = 'LOW RISK';
+                riskColor = 'green';
+            }
+
+            const serviceIcon = serviceUsed.includes('fallback') ? 'fa-exclamation-triangle' : 'fa-check-circle';
+            const serviceColor = serviceUsed.includes('fallback') ? 'orange' : 'blue';
+
+            resultDiv.innerHTML = `
+                <div class="${riskClass} p-6 rounded-xl border border-${riskColor}-200">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-bold flex items-center text-${riskColor}-800">
+                                <i class="fas ${riskIcon} mr-3"></i> ${riskText}
+                            </h3>
+                            <p class="mt-1 text-${riskColor}-700">Risk Score: <span class="font-bold">${percentage}%</span></p>
+                            <p class="mt-1 text-xs text-gray-600 flex items-center">
+                                <i class="fas ${serviceIcon} mr-1 text-${serviceColor}-500"></i>
+                                Processed by: ${serviceUsed}
+                            </p>
+                        </div>
+                        <button onclick="copyToClipboard('${JSON.stringify({transaction, riskScore, serviceUsed}).replace(/'/g, "\\'")}')"
+                                class="px-3 py-1 text-sm border border-${riskColor}-300 rounded-md text-${riskColor}-700 bg-white hover:bg-${riskColor}-50">
+                            <i class="fas fa-copy mr-1"></i> Copy Data
+                        </button>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white bg-opacity-50 p-3 rounded-lg">
+                            <h4 class="font-medium text-gray-700">Transaction Details</h4>
+                            <div class="mt-2 space-y-1 text-sm">
+                                <p><span class="font-medium">ID:</span> ${transaction.transaction_id}</p>
+                                <p><span class="font-medium">Type:</span> ${transaction.type}</p>
+                                <p><span class="font-medium">Amount:</span> $${transaction.amount.toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <div class="bg-white bg-opacity-50 p-3 rounded-lg">
+                            <h4 class="font-medium text-gray-700">Account Details</h4>
+                            <div class="mt-2 space-y-1 text-sm">
+                                <p><span class="font-medium">From:</span> ${transaction.nameOrig}</p>
+                                <p><span class="font-medium">To:</span> ${transaction.nameDest}</p>
+                                <p><span class="font-medium">Balance Change:</span> $${(transaction.oldbalanceOrg - transaction.newbalanceOrig).toLocaleString()}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex justify-between items-center">
+                        <small class="text-xs opacity-70">Analyzed at ${new Date().toLocaleTimeString()}</small>
+                        <div class="flex space-x-2">
+                            <button onclick="sendToIngestService('${JSON.stringify(transaction).replace(/'/g, "\\'")}')"
+                                    class="px-2 py-1 text-xs border border-${riskColor}-300 rounded-md text-${riskColor}-700 bg-white hover:bg-${riskColor}-50">
+                                <i class="fas fa-database mr-1"></i> Store Transaction
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // History functions
+        function updateHistory(transaction, result) {
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+            history.unshift({
+                transaction,
+                result,
+                timestamp: new Date()
+            });
+            if (history.length > 5) history.pop();
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+
+            if (history.length === 0) {
+                historyList.innerHTML = `
+                    <div class="text-center py-4 text-gray-500">
+                        <i class="fas fa-history text-2xl mb-2"></i>
+                        <p>No test history yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = history.map(item => {
+                const riskScore = item.result.risk;
+                let riskClass, riskIcon, riskColor;
+
+                if (riskScore >= 0.8) {
+                    riskClass = 'bg-red-50 border-red-200 text-red-800';
+                    riskIcon = 'fa-exclamation-circle';
+                    riskColor = 'red';
+                } else if (riskScore >= 0.5) {
+                    riskClass = 'bg-yellow-50 border-yellow-200 text-yellow-800';
+                    riskIcon = 'fa-exclamation-triangle';
+                    riskColor = 'yellow';
+                } else {
+                    riskClass = 'bg-green-50 border-green-200 text-green-800';
+                    riskIcon = 'fa-check-circle';
+                    riskColor = 'green';
+                }
+
+                const percentage = (riskScore * 100).toFixed(1);
+                const time = new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                return `
+                    <div class="history-item ${riskClass} border rounded-lg p-3 cursor-pointer hover:bg-${riskColor}-100"
+                         onclick="fillFormFromHistory('${encodeURIComponent(JSON.stringify(item.transaction))}')">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <i class="fas ${riskIcon} mr-2 text-${riskColor}-600"></i>
+                                <span class="font-medium">${percentage}%</span>
+                            </div>
+                            <div class="text-sm">
+                                ${time} • $${item.transaction.amount.toLocaleString()}
+                            </div>
+                        </div>
+                        <div class="mt-1 text-xs flex justify-between">
+                            <span>${item.transaction.type}</span>
+                            <span>${item.transaction.nameOrig} → ${item.transaction.nameDest}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            historyList.innerHTML = html;
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear your test history?')) {
+                localStorage.removeItem(HISTORY_KEY);
+                renderHistory();
+            }
+        }
+
+        // Utility functions
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btnText.innerHTML;
+                btnText.innerHTML = '<i class="fas fa-check mr-2"></i> Copied!';
+                setTimeout(() => {
+                    btnText.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+
+        function fillFormFromHistory(encodedTransaction) {
+            const transaction = JSON.parse(decodeURIComponent(encodedTransaction));
+
+            document.getElementById('type').value = transaction.type;
+            document.getElementById('amount').value = transaction.amount;
+            document.getElementById('nameOrig').value = transaction.nameOrig;
+            document.getElementById('oldbalanceOrg').value = transaction.oldbalanceOrg;
+            document.getElementById('newbalanceOrig').value = transaction.newbalanceOrig;
+            document.getElementById('nameDest').value = transaction.nameDest;
+            document.getElementById('oldbalanceDest').value = transaction.oldbalanceDest;
+            document.getElementById('newbalanceDest').value = transaction.newbalanceDest;
+
+            // Scroll to form
+            document.getElementById('transactionForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function generateRandomTransaction() {
+            const types = ['PAYMENT', 'TRANSFER', 'CASH_OUT', 'DEBIT'];
+            const randomType = types[Math.floor(Math.random() * types.length)];
+
+            const amount = Math.floor(Math.random() * 10000) + 10;
+            const oldBalanceOrg = Math.floor(Math.random() * 20000) + amount;
+            const newBalanceOrg = oldBalanceOrg - amount;
+
+            const oldBalanceDest = Math.floor(Math.random() * 5000);
+            const newBalanceDest = oldBalanceDest + amount;
+
+            document.getElementById('type').value = randomType;
+            document.getElementById('amount').value = amount.toFixed(2);
+            document.getElementById('nameOrig').value = `C${Math.floor(100000000 + Math.random() * 900000000)}`;
+            document.getElementById('oldbalanceOrg').value = oldBalanceOrg.toFixed(2);
+            document.getElementById('newbalanceOrig').value = newBalanceOrg.toFixed(2);
+            document.getElementById('nameDest').value = `M${Math.floor(100000000 + Math.random() * 900000000)}`;
+            document.getElementById('oldbalanceDest').value = oldBalanceDest.toFixed(2);
+            document.getElementById('newbalanceDest').value = newBalanceDest.toFixed(2);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            currentTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Dark mode functions
+        function toggleDarkMode() {
+            darkMode = !darkMode;
+            localStorage.setItem(config.storage.darkMode, darkMode);
+            updateDarkMode();
+            showNotification(`Dark mode ${darkMode ? 'enabled' : 'disabled'}`, 'info', 2000);
+        }
+
+        function updateDarkMode() {
+            if (darkMode) {
+                document.documentElement.classList.add('dark');
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                document.body.classList.remove('bg-gray-50');
+                document.body.classList.add('bg-gray-900', 'text-gray-100');
+            } else {
+                document.documentElement.classList.remove('dark');
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                document.body.classList.remove('bg-gray-900', 'text-gray-100');
+                document.body.classList.add('bg-gray-50');
+            }
+        }
+
+        // Send transaction to Ingest Service for storage
+        async function sendToIngestService(encodedTransaction) {
+            const transaction = JSON.parse(decodeURIComponent(encodedTransaction));
+
+            try {
+                let response;
+
+                if (config.api.useGateway) {
+                    // Try API Gateway first
+                    response = await fetch(`${API_GATEWAY_URL}/api/v1/ingest/ingest`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-API-Key': API_KEY
+                        },
+                        body: JSON.stringify({ transaction })
+                    });
+                } else {
+                    // Use direct service
+                    response = await fetch(`${config.services.ingestService}/ingest`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ transaction })
+                    });
+                }
+
+                if (response.ok) {
+                    showNotification('<i class="fas fa-check mr-2"></i>Transaction stored successfully', 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Failed to store transaction:', error);
+                showNotification('<i class="fas fa-times mr-2"></i>Failed to store transaction', 'error');
+            }
+        }
+
+        // Enhanced service connectivity test
+        async function testServiceConnectivity() {
+            const results = {
+                apiGateway: false,
+                modelService: false,
+                ingestService: false
+            };
+
+            if (config.api.useGateway) {
+                try {
+                    const gatewayResponse = await fetch(`${API_GATEWAY_URL}/health`, {
+                        headers: { 'X-API-Key': API_KEY },
+                        timeout: 5000
+                    });
+                    results.apiGateway = gatewayResponse.ok;
+                } catch (error) {
+                    console.warn('API Gateway connectivity test failed:', error);
+                }
+            }
+
+            try {
+                const modelResponse = await fetch(`${config.services.modelService}/health`, { timeout: 5000 });
+                results.modelService = modelResponse.ok;
+            } catch (error) {
+                console.warn('Model Service connectivity test failed:', error);
+            }
+
+            try {
+                const ingestResponse = await fetch(`${config.services.ingestService}/health`, { timeout: 5000 });
+                results.ingestService = ingestResponse.ok;
+            } catch (error) {
+                console.warn('Ingest Service connectivity test failed:', error);
+            }
+
+            return results;
+        }
+
+        // Expose functions to global scope for inline handlers
+        window.copyToClipboard = copyToClipboard;
+        window.fillFormFromHistory = fillFormFromHistory;
+        window.sendToIngestService = sendToIngestService;
+        window.testServiceConnectivity = testServiceConnectivity;
+
+        // Refresh status every 30 seconds
+        setInterval(checkServiceStatus, 30000);
+    </script>
+</body>
+</html>

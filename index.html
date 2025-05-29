@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FraudShield | Welcome</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234F46E5'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white">
+        <div class="container mx-auto px-4 py-16">
+            <div class="text-center animate-fade-in-up">
+                <div class="flex justify-center items-center mb-6">
+                    <i class="fas fa-shield-alt text-6xl mr-4"></i>
+                    <h1 class="text-5xl font-bold">FraudShield</h1>
+                </div>
+                <p class="text-xl opacity-90 max-w-2xl mx-auto">
+                    Advanced real-time transaction fraud detection system powered by machine learning
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-16">
+        <!-- Quick Access -->
+        <div class="text-center mb-16 animate-fade-in-up" style="animation-delay: 0.2s;">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8">Get Started</h2>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="Fraud Shield.html" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-play mr-2"></i>
+                    Launch Application
+                </a>
+                <button onclick="checkServices()" id="checkBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-heartbeat mr-2"></i>
+                    Check Services
+                </button>
+            </div>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="grid md:grid-cols-3 gap-8 mb-16">
+            <div class="bg-white rounded-xl p-6 shadow-lg card-hover animate-fade-in-up" style="animation-delay: 0.3s;">
+                <div class="text-blue-600 text-3xl mb-4">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">AI-Powered Detection</h3>
+                <p class="text-gray-600">
+                    Advanced machine learning algorithms analyze transaction patterns to identify fraudulent activities with high accuracy.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-lg card-hover animate-fade-in-up" style="animation-delay: 0.4s;">
+                <div class="text-green-600 text-3xl mb-4">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">Real-Time Analysis</h3>
+                <p class="text-gray-600">
+                    Get instant fraud risk scores for transactions, enabling immediate decision-making and risk mitigation.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-lg card-hover animate-fade-in-up" style="animation-delay: 0.5s;">
+                <div class="text-purple-600 text-3xl mb-4">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">Comprehensive Analytics</h3>
+                <p class="text-gray-600">
+                    Detailed risk assessments with confidence scores and transaction history for thorough analysis.
+                </p>
+            </div>
+        </div>
+
+        <!-- Service Status -->
+        <div class="bg-white rounded-xl p-6 shadow-lg animate-fade-in-up" style="animation-delay: 0.6s;">
+            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-server mr-2 text-blue-600"></i>
+                System Status
+            </h3>
+            <div id="serviceStatus" class="grid md:grid-cols-2 gap-4">
+                <div class="flex items-center p-3 bg-gray-100 rounded-lg">
+                    <i class="fas fa-circle-notch fa-spin mr-2 text-gray-500"></i>
+                    <span>Model Service: Checking...</span>
+                </div>
+                <div class="flex items-center p-3 bg-gray-100 rounded-lg">
+                    <i class="fas fa-circle-notch fa-spin mr-2 text-gray-500"></i>
+                    <span>Ingest Service: Checking...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Info -->
+        <div class="mt-16 text-center animate-fade-in-up" style="animation-delay: 0.7s;">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">How It Works</h3>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-upload text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold mb-2">1. Submit Transaction</h4>
+                    <p class="text-gray-600 text-sm">Enter transaction details including amounts, accounts, and transaction type.</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-cogs text-green-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold mb-2">2. AI Analysis</h4>
+                    <p class="text-gray-600 text-sm">Machine learning model analyzes patterns and calculates fraud risk score.</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-chart-bar text-purple-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold mb-2">3. Get Results</h4>
+                    <p class="text-gray-600 text-sm">Receive detailed risk assessment with confidence scores and recommendations.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-16">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 FraudShield. Advanced Fraud Detection System.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Check service status on page load
+        document.addEventListener('DOMContentLoaded', checkServices);
+
+        async function checkServices() {
+            const checkBtn = document.getElementById('checkBtn');
+            const originalText = checkBtn.innerHTML;
+            checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
+            checkBtn.disabled = true;
+
+            const modelStatus = document.querySelector('#serviceStatus div:first-child');
+            const ingestStatus = document.querySelector('#serviceStatus div:last-child');
+
+            // Check Model Service
+            try {
+                const response = await fetch('http://localhost:8001/health');
+                if (response.ok) {
+                    modelStatus.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-500"></i><span>Model Service: <span class="font-medium text-green-600">Online</span></span>';
+                    modelStatus.className = 'flex items-center p-3 bg-green-50 rounded-lg';
+                } else {
+                    throw new Error('Service unavailable');
+                }
+            } catch (error) {
+                modelStatus.innerHTML = '<i class="fas fa-times-circle mr-2 text-red-500"></i><span>Model Service: <span class="font-medium text-red-600">Offline</span></span>';
+                modelStatus.className = 'flex items-center p-3 bg-red-50 rounded-lg';
+            }
+
+            // Check Ingest Service
+            try {
+                const response = await fetch('http://localhost:9001/health');
+                if (response.ok) {
+                    ingestStatus.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-500"></i><span>Ingest Service: <span class="font-medium text-green-600">Online</span></span>';
+                    ingestStatus.className = 'flex items-center p-3 bg-green-50 rounded-lg';
+                } else {
+                    throw new Error('Service unavailable');
+                }
+            } catch (error) {
+                ingestStatus.innerHTML = '<i class="fas fa-times-circle mr-2 text-red-500"></i><span>Ingest Service: <span class="font-medium text-red-600">Offline</span></span>';
+                ingestStatus.className = 'flex items-center p-3 bg-red-50 rounded-lg';
+            }
+
+            checkBtn.innerHTML = originalText;
+            checkBtn.disabled = false;
+        }
+    </script>
+</body>
+</html>

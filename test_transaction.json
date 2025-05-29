@@ -1,0 +1,16 @@
+{
+  "transactions": [
+    {
+      "transaction_id": "test_123",
+      "step": 1,
+      "type": "PAYMENT",
+      "amount": 1000.0,
+      "nameOrig": "C123456789",
+      "oldbalanceOrg": 5000.0,
+      "newbalanceOrig": 4000.0,
+      "nameDest": "M987654321",
+      "oldbalanceDest": 0.0,
+      "newbalanceDest": 0.0
+    }
+  ]
+}
